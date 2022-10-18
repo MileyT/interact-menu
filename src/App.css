@@ -36,3 +36,32 @@
     transform: rotate(360deg);
   }
 }
+.widget{
+  margin-right: 20px;
+  width: 100px
+}
+.title{
+  width: 100%;
+}
+.phone{
+  width: 30px;
+  height: auto;
+}
+.title_phone{
+  width: 50px;
+}
+.pc{
+  width: 50px;
+  height: auto
+}
+.pad{
+  width: 80px;
+  height: auto;
+  margin-top: -13px;
+  margin-bottom: -17px;
+}
+.components{
+  display: flex;
+  flex-direction: "row";
+  width: 200px;
+}

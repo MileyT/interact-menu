@@ -1,5 +1,7 @@
 (function a(){
-    var layer = null;
+    var layerData = null;
+    var source = null;
+    var model = null;
     class Devices extends HTMLElement{
       constructor() {
         super();
@@ -63,8 +65,8 @@
       }
     }
     class Device extends HTMLElement {
-        constructor() {
-          super();
+      constructor() {
+        super();
       }
       static get observedAttributes() {return ['data']; }
       attributeChangedCallback(name, oldValue, newValue) {
@@ -75,6 +77,11 @@
           .widget{
             margin-right: 20px;
             text-align: center;
+            padding: 1px
+          }
+          .widgetMove{
+            border: 1px solid #bdd7ba;
+            padding: 0px
           }
           .title{
             width: 100%;
@@ -84,6 +91,7 @@
           #picContainer{
             width: 50px;
             height: 50px;
+            pointer-events: none;
           }
           .phone{
             width: 28px;
@@ -115,10 +123,35 @@
 
         console.log(this.getAttribute('data'));
         let data= JSON.parse(this.getAttribute('data'));
-        content.querySelector('#container').addEventListener("click", () =>{
-          console.log("点击了")
+        /**document.addEventListener("touchstart", (e) =>{
+          console.log("点击了2")
+          e.target.setAttribute('class', `widget widgetMove`);
           //this.props.onClick(data);
+        })*/
+        layerData.layerItemMaps.delete(data.id);
+        var layerTo = content.querySelector('#container');
+        layerData.layerItemMaps.set(data.id, (type, e, name) => {
+          if (type === "touchmove") {
+            var rect = layerTo.getBoundingClientRect()
+            if (e.targetTouches[0].clientX >= rect.x && e.targetTouches[0].clientX <= rect.right && e.targetTouches[0].clientY >= rect.y && e.targetTouches[0].clientY <= rect.bottom){
+              layerTo.setAttribute('class', `widget widgetMove`);
+            } else {
+              layerTo.setAttribute('class', `widget`);
+            }
+          } else if (type === "touchend"){
+            var rect = layerTo.getBoundingClientRect();
+            layerTo.setAttribute('class', `widget`);
+            if (e.changedTouches[0].clientX >= rect.x && e.changedTouches[0].clientX <= rect.right && e.changedTouches[0].clientY >= rect.y && e.changedTouches[0].clientY <= rect.bottom){
+              fetch(`http://10.5.139.38:3005/devices/moveToDevices?id=${data.id}&component=${name}`)
+              .then(res =>{
+                  res.text().then(function(data){
+                    console.log(data)
+                 });
+              })
+            }
+          }
         })
+
         content.querySelector('#picContainer>img').setAttribute('src', `${data.category}.png`);
         content.querySelector('#picContainer>img').setAttribute('class', `${data.category}`);
         content.querySelector('#title').innerText = data.title;
@@ -129,18 +162,38 @@
     }
 
     function showLayer(x, y){
-      let str = `position:absolute;left:${x - 10}px; top:${y - 100}px`;
-      if (!layer){
+      let str = `position:fixed;left:${x - 10}px; top:${y - 100}px`;
+      if (!layerData){
         const p = document.createElement("user-Devices");
         const d = document.createElement("div");
         d.style.cssText = str;
         d.appendChild(p);
         document.body.appendChild(d);
-        layer = d;
+        layerData = {};
+        layerData.layerItemMaps = new Map();
+        layerData.layer = d;
       } else {
-        layer.style.cssText = str;
+        layerData.layer.style.cssText = str;
       }
     }
+
+    function hideLayer(){
+      document.body.removeChild(layerData.layer);
+      layerData.layerItemMaps = new Map();
+      layerData = null;
+    }
+
+    function notifyLayerEvent(type, value, name){
+      if (!layerData) return;
+      var layerItemMaps = layerData.layerItemMaps;
+      if (layerItemMaps){
+        Array.from(layerItemMaps.keys()).forEach(key =>{
+          var fun = layerItemMaps.get(key);
+          if (fun) fun(type, value, name);
+        })
+      }
+    }
+
     window.customElements.define('user-device', Device);
     window.customElements.define('user-devices', Devices);
     window.click = (ele) =>{
@@ -148,9 +201,8 @@
         showLayer(e.clientX, e.clientY);
       });
       document.addEventListener("click", function(e){
-        if (e.target !== ele && layer){
-          document.body.removeChild(layer);
-          layer = null;
+        if (e.target !== ele && layerData){
+          hideLayer();
         }
       })
     }
@@ -175,10 +227,64 @@
           }
         })
         document.addEventListener("click", function(e){
-          if (e.target !== ele && layer){
-            document.body.removeChild(layer);
-            layer = null;
+          if (e.target !== ele && layerData){
+            hideLayer();
           }
+        })
+      }
+      window.drag = (ele, name) =>{
+        console.log("要拖动" + name)
+        ele.addEventListener('touchstart', function (e) {
+          if (!model) { // 在没有遮罩的时候创建遮罩
+            model = document.createElement('div')
+          }
+          document.body.appendChild(model)
+          showLayer(ele.offsetLeft, ele.offsetTop - 20, name);
+          let element = e.targetTouches[0]
+          let target = e.target.cloneNode(true) // 拷贝目标元素
+
+          // 记录初始点击位置 client，用于计算移动距离
+          source = {start: {}};
+          source.client = {
+            x: element.clientX,
+            y: element.clientY
+          }
+
+          // 算出目标元素的固定位置
+          let disX = source.start.left = element.target.getBoundingClientRect().left
+          let disY = source.start.top = element.target.getBoundingClientRect().top
+
+          model.style.cssText = `position: fixed; left: ${disX}px; top: ${disY}px; z-index: 999; opacity: 0.5; pointer-events: none;`
+
+          // 将拷贝的元素放到遮罩中
+          model.appendChild(target);
+          dragTarget = target;
+          notifyLayerEvent("touchstart", e, name);
+        })
+
+        ele.addEventListener('touchmove', function (e) {
+            let element = e.targetTouches[0]
+
+            // 根据初始点击位置 client 计算移动距离
+            let left = source.start.left + element.clientX - source.client.x
+            let top = source.start.top + element.clientY - source.client.y
+
+            // 移动当前元素
+            model.style.left = `${left}px`
+            model.style.top = `${top}px`
+            notifyLayerEvent("touchmove", e, name);
+        })
+        document.addEventListener('touchend', function (e) {
+          // 删除遮罩层
+          if (source){
+            document.body.removeChild(model);
+            model.removeChild(dragTarget);
+            source = null;
+          }
+          // 处理结果
+          console.log("结束" + name)
+          notifyLayerEvent("touchend", e, name);
+          setTimeout(hideLayer, 1000);
         })
       }
 

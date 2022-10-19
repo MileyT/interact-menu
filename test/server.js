@@ -2,6 +2,7 @@
 const url = require('url');
 var http = require('http'); //引用http模块
 var fs = require("fs");
+var querystring = require('querystring');
 
 // http模块实例化，别名挂载
 var app = http.createServer(function(req, res){
@@ -55,6 +56,20 @@ var app = http.createServer(function(req, res){
           //res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5500');
           console.log("haha2")
           res.end(JSON.stringify(resData));
+          return;
+        }
+      } else if (pathname === '/devices/moveToDevices') {
+        // 获取HTTP动词
+        var arg = url.parse(req.url).query;
+        var params = querystring.parse(arg);
+        if (params.component) {
+          res.setHeader('Content-Type', 'application/text');
+          if( req.headers.origin == 'http://127.0.0.1:5500' || req.headers.origin == 'http://10.5.139.38:5500' ){
+            res.setHeader("Access-Control-Allow-Origin", req.headers.origin);
+          }
+          //res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5500');
+          console.log(`成功设置${params.component}到${params.id}`)
+          res.end("设置成功");
           return;
         }
       }

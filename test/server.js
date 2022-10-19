@@ -34,20 +34,19 @@ var app = http.createServer(function(req, res){
         const method = req.method;
         if (method === 'GET') {
           // 写一个假数据
-         let map = new Map([["pad", "pad.png"],["phone", "phone.png"],["pc","pc.png"]])
-          let style = new Map([["pad", "pad"],["phone", "phone"],["pc","pc"]]);
+          //let map = new Map([["pad", "pad"],["phone", "phone"],["pc","pc"]])
           const resData =[{
-            title: "电脑",
-            pic: map.get("pc"),
-            style: style.get("pc")
+            title: "设备1",
+            category: "pc",
+            id: "1",
           }, {
-            title: "手机",
-            pic: map.get("phone"),
-            style: style.get("phone")
+            title: "设备2",
+            category: "phone",
+            id: "2",
           },{
-            title: "pad",
-            pic: map.get("pad"),
-            style: style.get("pad")
+            title: "设备3",
+            category: "pad",
+            id: "3"
           }];
           res.setHeader('Content-Type', 'application/json');
           if( req.headers.origin == 'http://127.0.0.1:5500' || req.headers.origin == 'http://10.5.139.38:5500' ){
@@ -66,5 +65,5 @@ app.listen(3005, function(){
    // 传入了两个参数
    // 第一个参数是3000是端口号，第二个参数是一个函数，表示服务器启动后执行的事
    // 在终端控制台上打印，方便了解服务器是否启动成功
-   console.log("服务器启动成功，浏览器地址：http://127.0.0.1:3005/")
+   console.log("服务器启动成功，浏览器地址：http://10.5.139.38:3005/")
 })

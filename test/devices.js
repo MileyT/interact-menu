@@ -1,4 +1,5 @@
 (function a(){
+    var layer = null;
     class Devices extends HTMLElement{
       constructor() {
         super();
@@ -7,17 +8,30 @@
         const template = document.createElement("template");
         template.innerHTML = `
         <style>
+          .container{
+            background-color: #d4e9d6;
+            border-radius: 4px;
+            text-align: center;
+            color: red
+          }
           .components{
             display: flex;
+            padding-left: 20px;
+            padding-top: 10px;
+            padding-bottom: 10px;
             flex-direction: "row";
             width: 200px;
-            background-color: #0F0;
+            color: black;
+            font-size: 14px
           }
         </style>
+        <div class="container">
+        组件展示到
         <div id="devices" class="components"/>
+        </div>
       `;
         var shadow = this.attachShadow( { mode: 'closed' } );
-        fetch('http://127.0.0.1:3005/devices/getDevices')
+        fetch('http://10.5.139.38:3005/devices/getDevices')
         .then(res =>{
           console.log(res)
           res.json().then(function(data){
@@ -64,13 +78,16 @@
           }
           .title{
             width: 100%;
+            white-space: nowrap;
+            text-align: center;
+          }
+          #picContainer{
+            width: 50px;
+            height: 50px;
           }
           .phone{
             width: 28px;
             height: auto;
-          }
-          .title_phone{
-            width: 50px;
           }
           .pc{
             padding-top: 2px;
@@ -88,8 +105,8 @@
           }
         </style>
         <div id="container" class="widget">
-          <img></img>
-          <div>{data.title}</div>
+          <div id="picContainer"><img></img></div>
+          <div id="title">{data.title}</div>
         </div>
       `;
         var shadow = this.attachShadow( { mode: 'closed' } );
@@ -102,27 +119,39 @@
           console.log("点击了")
           //this.props.onClick(data);
         })
-        content.querySelector('img').setAttribute('src', data.pic);
-        content.querySelector('img').setAttribute('class', `${data.style}`);
-        content.querySelector('#container>div').innerText = data.title;
-        content.querySelector('#container>div').setAttribute('class', `title title_${data.style}`);
+        content.querySelector('#picContainer>img').setAttribute('src', `${data.category}.png`);
+        content.querySelector('#picContainer>img').setAttribute('class', `${data.category}`);
+        content.querySelector('#title').innerText = data.title;
+        content.querySelector('#title').setAttribute('class', `title title_${data.category}`);
 
         shadow.appendChild(content);
     }
     }
 
+    function showLayer(x, y){
+      let str = `position:absolute;left:${x - 10}px; top:${y - 100}px`;
+      if (!layer){
+        const p = document.createElement("user-Devices");
+        const d = document.createElement("div");
+        d.style.cssText = str;
+        d.appendChild(p);
+        document.body.appendChild(d);
+        layer = d;
+      } else {
+        layer.style.cssText = str;
+      }
+    }
     window.customElements.define('user-device', Device);
     window.customElements.define('user-devices', Devices);
     window.click = (ele) =>{
       ele.addEventListener('click', function (e) {
-        const p = document.createElement("user-Devices");
-        const d = document.createElement("div");
-        var _x=e.clientX;
-        var _y=e.clientY;
-        let str = `position:absolute;left:${_x - 10}px; top:${_y - 100}px`;
-        d.style.cssText = str;
-        d.appendChild(p);
-        document.body.appendChild(d);
+        showLayer(e.clientX, e.clientY);
+      });
+      document.addEventListener("click", function(e){
+        if (e.target !== ele && layer){
+          document.body.removeChild(layer);
+          layer = null;
+        }
       })
     }
     window.longpress = (ele) =>{
@@ -134,23 +163,21 @@
         ele.addEventListener('touchstart', function () {
           startTime = +new Date()
           timer = setTimeout(function () {
-            var div= document.createElement("div");
-            div.innerText = "helloworld";
+            showLayer(e.changedTouches[0].pageX, e.changedTouches[0].pageY);
           }, 700)
         })
 
         ele.addEventListener('touchend', function (e) {
           endTime = +new Date()
           clearTimeout(timer)
-          if (endTime - startTime > 2000) {
-            const p = document.createElement("user-Devices");
-            const d = document.createElement("div");
-            var _x=e.changedTouches[0].pageX;
-            var _y=e.changedTouches[0].pageY;
-            let str = `position:absolute;left:${_x - 10}px; top:${_y - 100}px`;
-            d.style.cssText = str;
-            d.appendChild(p);
-            document.body.appendChild(d);
+          if (endTime - startTime > 700) {
+            showLayer(e.changedTouches[0].pageX, e.changedTouches[0].pageY);
+          }
+        })
+        document.addEventListener("click", function(e){
+          if (e.target !== ele && layer){
+            document.body.removeChild(layer);
+            layer = null;
           }
         })
       }

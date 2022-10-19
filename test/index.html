@@ -1,7 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <style>
+      *{
+        -webkit-touch-callout:none;
+        -webkit-user-select:none;
+        -moz-user-select:none;
+        -ms-user-select:none;
+        user-select:none;
+      }
+      input , textarea{
+	      -webkit-user-select:auto;
+      }
+    </style>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, maximum-scale=1.0">
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
@@ -24,14 +37,14 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>React App</title>
+    <title>Test App</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <script type="text/javascript" src="devices.js" ></script>
     <script>
       window.onload = function() { // 也可以用 window.addEventListener('load', (event) => {
-        window.click(document.querySelector("button"))
+        window.longpress(document.querySelector("button"))
       };
     </script>
     <div id="root"></div>
@@ -41,7 +54,7 @@
     <div>测试文字测试文字4</div>
     <div>测试文字测试文字5</div>
     <div>测试文字测试文字6</div>
-    <button type="button">测试</button>
+    <button type="button">点这里出浮层</button>
     <script src="https://cdn.bootcss.com/vConsole/3.2.0/vconsole.min.js"></script>
     <script>
       // 初始化
